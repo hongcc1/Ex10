@@ -493,7 +493,7 @@ class CoffeeTracker {
             return window.crypto.randomUUID();
         }
 
-        return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        return `${Date.now()}-${Math.random().toString(36).slice(2) || 'entry'}`;
     }
 
     normalizeCoffeeEntry(entry) {
@@ -546,10 +546,12 @@ class CoffeeTracker {
         const link = document.createElement('a');
         link.href = url;
         link.download = 'coffee-tracker-backup.json';
+        link.addEventListener('click', () => {
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }, { once: true });
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
         this.showNotification('Coffee data exported');
     }
 
@@ -571,12 +573,12 @@ class CoffeeTracker {
                     : { ...this.defaultPreferences, ...importedContent.preferences };
 
                 if (!Array.isArray(importedData)) {
-                    throw new Error('Invalid data format');
+                    throw this.createImportError();
                 }
 
                 const normalizedData = importedData.map(entry => this.normalizeCoffeeEntry(entry)).filter(Boolean);
                 if (normalizedData.length === 0 && importedData.length > 0) {
-                    throw new Error('No valid coffee entries found');
+                    throw this.createImportError('No valid coffee entries found in this backup.');
                 }
 
                 this.saveUndoState();
@@ -593,12 +595,19 @@ class CoffeeTracker {
                     : 'Data imported successfully!';
                 this.showNotification(importMessage);
             } catch (error) {
-                alert(error.message || 'Error importing data. Please make sure the file is valid.');
+                console.error(error);
+                alert(error.userMessage || 'Error importing data. Please make sure the file is valid.');
             } finally {
                 event.target.value = '';
             }
         };
         reader.readAsText(file);
+    }
+
+    createImportError(userMessage = 'Error importing data. Please make sure the file is valid.') {
+        const error = new Error(userMessage);
+        error.userMessage = userMessage;
+        return error;
     }
 
     showNotification(message) {
