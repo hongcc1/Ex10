@@ -1,106 +1,362 @@
+const STORAGE_KEY = 'coffeeData';
+const DEFAULT_EMPTY_MESSAGE = 'No coffee recorded today. Add your first cup!';
+const VALID_COFFEE_TYPES = new Set([
+    'Espresso',
+    'Americano',
+    'Latte',
+    'Cappuccino',
+    'Macchiato',
+    'Mocha',
+    'French Press',
+    'Cold Brew',
+    'Drip Coffee',
+    'Other'
+]);
+const VALID_COFFEE_SIZES = new Set([
+    'Small',
+    'Medium',
+    'Large',
+    'Extra Large'
+]);
+const TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+
+function safeJsonParse(value, fallback) {
+    if (typeof value !== 'string') {
+        return fallback;
+    }
+
+    try {
+        return JSON.parse(value);
+    } catch (error) {
+        return fallback;
+    }
+}
+
+function normalizeText(value, maxLength = 120) {
+    if (typeof value !== 'string') {
+        return '';
+    }
+
+    return value.trim().slice(0, maxLength);
+}
+
+function isValidTime(time) {
+    return TIME_PATTERN.test(time);
+}
+
+function sanitizeCoffeeEntry(entry, fallbackDate = new Date().toDateString(), fallbackId = Date.now()) {
+    if (!entry || typeof entry !== 'object') {
+        return null;
+    }
+
+    const type = normalizeText(entry.type, 40);
+    const size = normalizeText(entry.size, 20);
+    const time = normalizeText(entry.time, 5);
+
+    if (!VALID_COFFEE_TYPES.has(type) || !VALID_COFFEE_SIZES.has(size) || !isValidTime(time)) {
+        return null;
+    }
+
+    const numericId = Number(entry.id);
+
+    return {
+        id: Number.isFinite(numericId) ? numericId : fallbackId,
+        type,
+        size,
+        time,
+        notes: normalizeText(entry.notes, 160),
+        date: normalizeText(entry.date, 40) || fallbackDate
+    };
+}
+
+function sanitizeCoffeeCollection(data, getFallbackId = () => Date.now(), fallbackDate = new Date().toDateString()) {
+    if (!Array.isArray(data)) {
+        return [];
+    }
+
+    return data
+        .map((entry, index) => sanitizeCoffeeEntry(entry, fallbackDate, getFallbackId() + index))
+        .filter(Boolean);
+}
+
+function loadCoffeeData(storage) {
+    const storedData = storage && typeof storage.getItem === 'function'
+        ? storage.getItem(STORAGE_KEY)
+        : null;
+
+    return sanitizeCoffeeCollection(safeJsonParse(storedData, []));
+}
+
+function sortCoffeeByTimeDesc(coffeeEntries) {
+    return [...coffeeEntries].sort((first, second) => {
+        if (first.time === second.time) {
+            return second.id - first.id;
+        }
+
+        return second.time.localeCompare(first.time);
+    });
+}
+
+function calculateStatistics(coffeeEntries) {
+    const totalCups = coffeeEntries.length;
+
+    if (totalCups === 0) {
+        return {
+            totalCups: 0,
+            avgPerDay: '0',
+            favoriteType: '-'
+        };
+    }
+
+    const uniqueDates = new Set(coffeeEntries.map((coffee) => coffee.date));
+    const typeCounts = new Map();
+
+    coffeeEntries.forEach((coffee) => {
+        typeCounts.set(coffee.type, (typeCounts.get(coffee.type) || 0) + 1);
+    });
+
+    let favoriteType = '-';
+    let favoriteCount = -1;
+
+    typeCounts.forEach((count, type) => {
+        if (count > favoriteCount) {
+            favoriteType = type;
+            favoriteCount = count;
+        }
+    });
+
+    return {
+        totalCups,
+        avgPerDay: (totalCups / uniqueDates.size).toFixed(1),
+        favoriteType
+    };
+}
+
+function formatTime(time24) {
+    if (!isValidTime(time24)) {
+        return time24;
+    }
+
+    const [hours, minutes] = time24.split(':').map(Number);
+    const hour12 = hours % 12 || 12;
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+
+    return `${hour12}:${String(minutes).padStart(2, '0')} ${ampm}`;
+}
+
 class CoffeeTracker {
-    constructor() {
-        this.coffeeData = JSON.parse(localStorage.getItem('coffeeData')) || [];
-        this.init();
+    constructor(options = {}) {
+        this.document = options.document || (typeof document !== 'undefined' ? document : null);
+        this.storage = options.storage || (typeof localStorage !== 'undefined' ? localStorage : null);
+        this.alert = options.alert || (typeof alert !== 'undefined' ? alert : () => {});
+        this.confirm = options.confirm || (typeof confirm !== 'undefined' ? confirm : () => true);
+        this.schedule = options.schedule || ((callback, delay) => setTimeout(callback, delay));
+        this.now = options.now || (() => new Date());
+        this.coffeeData = loadCoffeeData(this.storage);
+        this.elements = this.document ? this.cacheElements() : {};
+
+        if (this.document) {
+            this.init();
+        }
+    }
+
+    cacheElements() {
+        return {
+            addCoffeeBtn: this.document.getElementById('addCoffeeBtn'),
+            resetBtn: this.document.getElementById('resetBtn'),
+            cancelBtn: this.document.getElementById('cancelBtn'),
+            coffeeForm: this.document.getElementById('coffeeForm'),
+            coffeeType: this.document.getElementById('coffeeType'),
+            coffeeSize: this.document.getElementById('coffeeSize'),
+            coffeeTime: this.document.getElementById('coffeeTime'),
+            coffeeNotes: this.document.getElementById('coffeeNotes'),
+            addCoffeeForm: this.document.getElementById('addCoffeeForm'),
+            todayCount: this.document.getElementById('todayCount'),
+            coffeeList: this.document.getElementById('coffeeList'),
+            totalCups: this.document.getElementById('totalCups'),
+            avgPerDay: this.document.getElementById('avgPerDay'),
+            favoriteType: this.document.getElementById('favoriteType')
+        };
+    }
+
+    hasRequiredElements() {
+        return Object.values(this.elements).every(Boolean);
     }
 
     init() {
+        if (!this.hasRequiredElements()) {
+            return;
+        }
+
         this.setupEventListeners();
         this.updateDisplay();
         this.setCurrentTime();
     }
 
     setupEventListeners() {
-        // Add coffee button
-        document.getElementById('addCoffeeBtn').addEventListener('click', () => {
+        this.elements.addCoffeeBtn.addEventListener('click', () => {
             this.showAddForm();
         });
 
-        // Reset button
-        document.getElementById('resetBtn').addEventListener('click', () => {
+        this.elements.resetBtn.addEventListener('click', () => {
             this.resetToday();
         });
 
-        // Cancel button
-        document.getElementById('cancelBtn').addEventListener('click', () => {
+        this.elements.cancelBtn.addEventListener('click', () => {
             this.hideAddForm();
         });
 
-        // Coffee form submission
-        document.getElementById('coffeeForm').addEventListener('submit', (e) => {
-            e.preventDefault();
+        this.elements.coffeeForm.addEventListener('submit', (event) => {
+            event.preventDefault();
             this.addCoffee();
+        });
+
+        this.elements.coffeeList.addEventListener('click', (event) => {
+            const target = event.target;
+            const button = target && target.className === 'delete-btn' ? target : null;
+
+            if (!button) {
+                return;
+            }
+
+            const coffeeId = Number(button.dataset.coffeeId);
+
+            if (Number.isFinite(coffeeId)) {
+                this.deleteCoffee(coffeeId);
+            }
         });
     }
 
+    getCurrentDateString() {
+        return this.now().toDateString();
+    }
+
+    getCurrentTimeString() {
+        return this.now().toTimeString().slice(0, 5);
+    }
+
     showAddForm() {
-        document.getElementById('addCoffeeForm').style.display = 'block';
-        document.getElementById('addCoffeeForm').scrollIntoView({ behavior: 'smooth' });
+        this.elements.addCoffeeForm.style.display = 'block';
+
+        if (typeof this.elements.addCoffeeForm.scrollIntoView === 'function') {
+            this.elements.addCoffeeForm.scrollIntoView({ behavior: 'smooth' });
+        }
+
         this.setCurrentTime();
     }
 
     hideAddForm() {
-        document.getElementById('addCoffeeForm').style.display = 'none';
+        this.elements.addCoffeeForm.style.display = 'none';
         this.clearForm();
     }
 
     setCurrentTime() {
-        const now = new Date();
-        const timeString = now.toTimeString().slice(0, 5);
-        document.getElementById('coffeeTime').value = timeString;
+        this.elements.coffeeTime.value = this.getCurrentTimeString();
+    }
+
+    getFormData() {
+        return {
+            type: this.elements.coffeeType.value,
+            size: this.elements.coffeeSize.value,
+            time: this.elements.coffeeTime.value,
+            notes: this.elements.coffeeNotes.value
+        };
+    }
+
+    validateCoffeeData(formData) {
+        const coffee = sanitizeCoffeeEntry(
+            {
+                id: this.now().getTime(),
+                ...formData,
+                date: this.getCurrentDateString()
+            },
+            this.getCurrentDateString(),
+            this.now().getTime()
+        );
+
+        if (!coffee) {
+            return {
+                isValid: false,
+                message: 'Please select a valid coffee type, size, and time.'
+            };
+        }
+
+        return {
+            isValid: true,
+            coffee
+        };
     }
 
     addCoffee() {
-        const type = document.getElementById('coffeeType').value;
-        const size = document.getElementById('coffeeSize').value;
-        const time = document.getElementById('coffeeTime').value;
-        const notes = document.getElementById('coffeeNotes').value;
+        const validation = this.validateCoffeeData(this.getFormData());
 
-        if (!type || !size || !time) {
-            alert('Please fill in all required fields');
-            return;
+        if (!validation.isValid) {
+            this.alert(validation.message);
+            return false;
         }
 
-        const coffee = {
-            id: Date.now(),
-            type,
-            size,
-            time,
-            notes,
-            date: new Date().toDateString()
-        };
+        this.coffeeData = [...this.coffeeData, validation.coffee];
 
-        this.coffeeData.push(coffee);
-        this.saveData();
+        if (!this.saveData()) {
+            this.coffeeData.pop();
+            return false;
+        }
+
         this.updateDisplay();
         this.hideAddForm();
-        
-        // Show success message
         this.showNotification('Coffee added successfully! ☕');
+
+        return true;
     }
 
     deleteCoffee(id) {
-        if (confirm('Are you sure you want to delete this coffee entry?')) {
-            this.coffeeData = this.coffeeData.filter(coffee => coffee.id !== id);
-            this.saveData();
-            this.updateDisplay();
-            this.showNotification('Coffee entry deleted');
+        if (!this.confirm('Are you sure you want to delete this coffee entry?')) {
+            return false;
         }
+
+        const previousCoffeeData = this.coffeeData;
+        const nextCoffeeData = this.coffeeData.filter((coffee) => coffee.id !== id);
+
+        if (nextCoffeeData.length === previousCoffeeData.length) {
+            return false;
+        }
+
+        this.coffeeData = nextCoffeeData;
+
+        if (!this.saveData()) {
+            this.coffeeData = previousCoffeeData;
+            return false;
+        }
+
+        this.updateDisplay();
+        this.showNotification('Coffee entry deleted');
+
+        return true;
     }
 
     resetToday() {
-        if (confirm('Are you sure you want to reset today\'s coffee count?')) {
-            const today = new Date().toDateString();
-            this.coffeeData = this.coffeeData.filter(coffee => coffee.date !== today);
-            this.saveData();
-            this.updateDisplay();
-            this.showNotification('Today\'s coffee count has been reset');
+        if (!this.confirm('Are you sure you want to reset today\'s coffee count?')) {
+            return false;
         }
+
+        const today = this.getCurrentDateString();
+        const previousCoffeeData = this.coffeeData;
+        this.coffeeData = this.coffeeData.filter((coffee) => coffee.date !== today);
+
+        if (!this.saveData()) {
+            this.coffeeData = previousCoffeeData;
+            return false;
+        }
+
+        this.updateDisplay();
+        this.showNotification('Today\'s coffee count has been reset');
+
+        return true;
     }
 
     getTodaysCoffee() {
-        const today = new Date().toDateString();
-        return this.coffeeData.filter(coffee => coffee.date === today);
+        const today = this.getCurrentDateString();
+        return this.coffeeData.filter((coffee) => coffee.date === today);
     }
 
     updateDisplay() {
@@ -110,88 +366,107 @@ class CoffeeTracker {
     }
 
     updateTodayCount() {
-        const todaysCoffee = this.getTodaysCoffee();
-        document.getElementById('todayCount').textContent = todaysCoffee.length;
+        this.elements.todayCount.textContent = String(this.getTodaysCoffee().length);
+    }
+
+    createEmptyMessage() {
+        const message = this.document.createElement('p');
+        message.className = 'empty-message';
+        message.textContent = DEFAULT_EMPTY_MESSAGE;
+        return message;
+    }
+
+    createCoffeeItem(coffee) {
+        const coffeeItem = this.document.createElement('div');
+        coffeeItem.className = 'coffee-item';
+
+        const coffeeMeta = this.document.createElement('div');
+        coffeeMeta.className = 'coffee-meta';
+
+        const coffeeDetails = this.document.createElement('div');
+        coffeeDetails.className = 'coffee-details';
+
+        const coffeeType = this.document.createElement('div');
+        coffeeType.className = 'coffee-type';
+        coffeeType.textContent = coffee.type;
+
+        const coffeeSize = this.document.createElement('div');
+        coffeeSize.className = 'coffee-size';
+        coffeeSize.textContent = coffee.size;
+
+        coffeeDetails.appendChild(coffeeType);
+        coffeeDetails.appendChild(coffeeSize);
+
+        if (coffee.notes) {
+            const coffeeNotes = this.document.createElement('div');
+            coffeeNotes.className = 'coffee-notes';
+            coffeeNotes.textContent = `"${coffee.notes}"`;
+            coffeeDetails.appendChild(coffeeNotes);
+        }
+
+        const coffeeActions = this.document.createElement('div');
+        coffeeActions.className = 'coffee-item-actions';
+
+        const coffeeTime = this.document.createElement('div');
+        coffeeTime.className = 'coffee-time';
+        coffeeTime.textContent = formatTime(coffee.time);
+
+        const deleteButton = this.document.createElement('button');
+        deleteButton.className = 'delete-btn';
+        deleteButton.dataset.coffeeId = String(coffee.id);
+        deleteButton.title = 'Delete this entry';
+        deleteButton.type = 'button';
+        deleteButton.textContent = '×';
+
+        coffeeActions.appendChild(coffeeTime);
+        coffeeActions.appendChild(deleteButton);
+        coffeeMeta.appendChild(coffeeDetails);
+        coffeeMeta.appendChild(coffeeActions);
+        coffeeItem.appendChild(coffeeMeta);
+
+        return coffeeItem;
     }
 
     updateCoffeeList() {
-        const coffeeList = document.getElementById('coffeeList');
-        const todaysCoffee = this.getTodaysCoffee();
+        const todaysCoffee = sortCoffeeByTimeDesc(this.getTodaysCoffee());
 
         if (todaysCoffee.length === 0) {
-            coffeeList.innerHTML = '<p class="empty-message">No coffee recorded today. Add your first cup!</p>';
+            this.elements.coffeeList.replaceChildren(this.createEmptyMessage());
             return;
         }
 
-        // Sort by time (latest first)
-        todaysCoffee.sort((a, b) => {
-            const timeA = new Date(`2000/01/01 ${a.time}`);
-            const timeB = new Date(`2000/01/01 ${b.time}`);
-            return timeB - timeA;
-        });
-
-        coffeeList.innerHTML = todaysCoffee.map(coffee => `
-            <div class="coffee-item">
-                <div class="coffee-meta">
-                    <div class="coffee-details">
-                        <div class="coffee-type">${coffee.type}</div>
-                        <div class="coffee-size">${coffee.size}</div>
-                        ${coffee.notes ? `<div class="coffee-notes">"${coffee.notes}"</div>` : ''}
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <div class="coffee-time">${this.formatTime(coffee.time)}</div>
-                        <button class="delete-btn" onclick="tracker.deleteCoffee(${coffee.id})" title="Delete this entry">×</button>
-                    </div>
-                </div>
-            </div>
-        `).join('');
+        const coffeeItems = todaysCoffee.map((coffee) => this.createCoffeeItem(coffee));
+        this.elements.coffeeList.replaceChildren(...coffeeItems);
     }
 
     updateStatistics() {
-        const totalCups = this.coffeeData.length;
-        document.getElementById('totalCups').textContent = totalCups;
-
-        // Calculate average per day
-        if (totalCups === 0) {
-            document.getElementById('avgPerDay').textContent = '0';
-            document.getElementById('favoriteType').textContent = '-';
-            return;
-        }
-
-        const dates = [...new Set(this.coffeeData.map(coffee => coffee.date))];
-        const avgPerDay = (totalCups / dates.length).toFixed(1);
-        document.getElementById('avgPerDay').textContent = avgPerDay;
-
-        // Find favorite coffee type
-        const typeCount = {};
-        this.coffeeData.forEach(coffee => {
-            typeCount[coffee.type] = (typeCount[coffee.type] || 0) + 1;
-        });
-
-        const favoriteType = Object.keys(typeCount).reduce((a, b) => 
-            typeCount[a] > typeCount[b] ? a : b
-        );
-        document.getElementById('favoriteType').textContent = favoriteType;
-    }
-
-    formatTime(time24) {
-        const [hours, minutes] = time24.split(':');
-        const hour12 = hours % 12 || 12;
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        return `${hour12}:${minutes} ${ampm}`;
+        const statistics = calculateStatistics(this.coffeeData);
+        this.elements.totalCups.textContent = String(statistics.totalCups);
+        this.elements.avgPerDay.textContent = statistics.avgPerDay;
+        this.elements.favoriteType.textContent = statistics.favoriteType;
     }
 
     clearForm() {
-        document.getElementById('coffeeForm').reset();
+        this.elements.coffeeForm.reset();
+        this.setCurrentTime();
     }
 
     saveData() {
-        localStorage.setItem('coffeeData', JSON.stringify(this.coffeeData));
+        if (!this.storage || typeof this.storage.setItem !== 'function') {
+            return false;
+        }
+
+        try {
+            this.storage.setItem(STORAGE_KEY, JSON.stringify(this.coffeeData));
+            return true;
+        } catch (error) {
+            this.alert('Unable to save coffee data right now. Please try again.');
+            return false;
+        }
     }
 
     showNotification(message) {
-        // Create a simple notification
-        const notification = document.createElement('div');
+        const notification = this.document.createElement('div');
         notification.style.cssText = `
             position: fixed;
             top: 20px;
@@ -206,10 +481,9 @@ class CoffeeTracker {
             font-weight: 500;
             animation: slideInRight 0.3s ease;
         `;
-        
-        // Add CSS animation
-        if (!document.querySelector('#notification-styles')) {
-            const style = document.createElement('style');
+
+        if (!this.document.getElementById('notification-styles')) {
+            const style = this.document.createElement('style');
             style.id = 'notification-styles';
             style.textContent = `
                 @keyframes slideInRight {
@@ -221,16 +495,15 @@ class CoffeeTracker {
                     to { transform: translateX(100%); opacity: 0; }
                 }
             `;
-            document.head.appendChild(style);
+            this.document.head.appendChild(style);
         }
 
         notification.textContent = message;
-        document.body.appendChild(notification);
+        this.document.body.appendChild(notification);
 
-        // Remove notification after 3 seconds
-        setTimeout(() => {
+        this.schedule(() => {
             notification.style.animation = 'slideOutRight 0.3s ease';
-            setTimeout(() => {
+            this.schedule(() => {
                 if (notification.parentNode) {
                     notification.parentNode.removeChild(notification);
                 }
@@ -238,108 +511,141 @@ class CoffeeTracker {
         }, 3000);
     }
 
-    // Export data function
     exportData() {
         const dataStr = JSON.stringify(this.coffeeData, null, 2);
-        const dataBlob = new Blob([dataStr], {type: 'application/json'});
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
         const url = URL.createObjectURL(dataBlob);
-        const link = document.createElement('a');
+        const link = this.document.createElement('a');
         link.href = url;
         link.download = 'coffee-data.json';
         link.click();
         URL.revokeObjectURL(url);
     }
 
-    // Import data function
     importData(event) {
-        const file = event.target.files[0];
-        if (!file) return;
+        const file = event && event.target && event.target.files ? event.target.files[0] : null;
+
+        if (!file) {
+            return;
+        }
 
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = (loadEvent) => {
             try {
-                const importedData = JSON.parse(e.target.result);
-                if (Array.isArray(importedData)) {
-                    this.coffeeData = importedData;
-                    this.saveData();
-                    this.updateDisplay();
-                    this.showNotification('Data imported successfully!');
-                } else {
+                const importedData = safeJsonParse(loadEvent.target.result, null);
+
+                if (!Array.isArray(importedData)) {
                     throw new Error('Invalid data format');
                 }
+
+                this.coffeeData = sanitizeCoffeeCollection(
+                    importedData,
+                    () => this.now().getTime(),
+                    this.getCurrentDateString()
+                );
+
+                if (!this.saveData()) {
+                    return;
+                }
+
+                this.updateDisplay();
+                this.showNotification('Data imported successfully!');
             } catch (error) {
-                alert('Error importing data. Please make sure the file is valid.');
+                this.alert('Error importing data. Please make sure the file is valid.');
             }
         };
+
         reader.readAsText(file);
     }
 }
 
-// Initialize the coffee tracker when the page loads
-let tracker;
-
-document.addEventListener('DOMContentLoaded', () => {
-    tracker = new CoffeeTracker();
-    
-    // Add keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        // Ctrl/Cmd + Enter to add coffee quickly
-        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-            tracker.showAddForm();
-        }
-        
-        // Escape to close form
-        if (e.key === 'Escape') {
-            const form = document.getElementById('addCoffeeForm');
-            if (form.style.display !== 'none') {
-                tracker.hideAddForm();
-            }
-        }
-    });
-});
-
-// Add some utility functions for potential future enhancements
 const CoffeeUtils = {
-    // Calculate caffeine content based on coffee type and size
     estimateCaffeine(type, size) {
         const caffeineMap = {
-            'Espresso': { base: 63, multiplier: 1 },
-            'Americano': { base: 150, multiplier: 1 },
-            'Latte': { base: 150, multiplier: 1 },
-            'Cappuccino': { base: 150, multiplier: 1 },
-            'Macchiato': { base: 75, multiplier: 1 },
-            'Mocha': { base: 95, multiplier: 1 },
+            Espresso: { base: 63, multiplier: 1 },
+            Americano: { base: 150, multiplier: 1 },
+            Latte: { base: 150, multiplier: 1 },
+            Cappuccino: { base: 150, multiplier: 1 },
+            Macchiato: { base: 75, multiplier: 1 },
+            Mocha: { base: 95, multiplier: 1 },
             'French Press': { base: 107, multiplier: 1 },
             'Cold Brew': { base: 200, multiplier: 1 },
             'Drip Coffee': { base: 95, multiplier: 1 }
         };
 
         const sizeMultiplier = {
-            'Small': 0.75,
-            'Medium': 1,
-            'Large': 1.25,
+            Small: 0.75,
+            Medium: 1,
+            Large: 1.25,
             'Extra Large': 1.5
         };
 
         const coffee = caffeineMap[type] || { base: 95, multiplier: 1 };
         const sizeM = sizeMultiplier[size] || 1;
-        
+
         return Math.round(coffee.base * coffee.multiplier * sizeM);
     },
 
-    // Get coffee emoji based on type
     getCoffeeEmoji(type) {
         const emojiMap = {
-            'Espresso': '☕',
-            'Americano': '☕',
-            'Latte': '🥛',
-            'Cappuccino': '☕',
-            'Macchiato': '☕',
-            'Mocha': '🍫',
+            Espresso: '☕',
+            Americano: '☕',
+            Latte: '🥛',
+            Cappuccino: '☕',
+            Macchiato: '☕',
+            Mocha: '🍫',
             'French Press': '☕',
             'Cold Brew': '🧊',
             'Drip Coffee': '☕'
         };
+
         return emojiMap[type] || '☕';
     }
 };
+
+const exportedMembers = {
+    CoffeeTracker,
+    CoffeeUtils,
+    DEFAULT_EMPTY_MESSAGE,
+    STORAGE_KEY,
+    calculateStatistics,
+    formatTime,
+    isValidTime,
+    loadCoffeeData,
+    normalizeText,
+    safeJsonParse,
+    sanitizeCoffeeCollection,
+    sanitizeCoffeeEntry,
+    sortCoffeeByTimeDesc
+};
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = exportedMembers;
+}
+
+if (typeof window !== 'undefined') {
+    window.CoffeeTracker = CoffeeTracker;
+    window.CoffeeUtils = CoffeeUtils;
+}
+
+let tracker;
+
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+    document.addEventListener('DOMContentLoaded', () => {
+        tracker = new CoffeeTracker();
+
+        if (typeof window !== 'undefined') {
+            window.tracker = tracker;
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+                tracker.showAddForm();
+            }
+
+            if (event.key === 'Escape' && tracker.elements.addCoffeeForm.style.display !== 'none') {
+                tracker.hideAddForm();
+            }
+        });
+    });
+}

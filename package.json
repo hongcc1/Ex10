@@ -1,0 +1,19 @@
+{
+  "name": "ex10",
+  "version": "1.0.0",
+  "description": "Coffee Tracker quality checks",
+  "private": true,
+  "main": "Coffee Tracker App/script.js",
+  "scripts": {
+    "lint": "node --check \"Coffee Tracker App/script.js\" && node --check \"Coffee Tracker App/tests/script.test.js\"",
+    "test": "node --test",
+    "check": "npm run lint && npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://localhost:26831/hongcc1/Ex10"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
