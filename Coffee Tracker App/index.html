@@ -26,13 +26,15 @@
                 
                 <div class="counter-controls">
                     <button id="addCoffeeBtn" class="add-btn">+ Add Coffee</button>
+                    <button id="undoBtn" class="secondary-btn" disabled>Undo</button>
                     <button id="resetBtn" class="reset-btn">Reset Today</button>
                 </div>
+                <p id="goalStatus" class="goal-status">Daily goal: 0 / 3 cups</p>
             </section>
 
             <!-- Add Coffee Form -->
             <section class="add-coffee-form" id="addCoffeeForm" style="display: none;">
-                <h3>Add a Coffee</h3>
+                <h3 id="formTitle">Add a Coffee</h3>
                 <form id="coffeeForm">
                     <div class="form-group">
                         <label for="coffeeType">Coffee Type:</label>
@@ -66,6 +68,11 @@
                         <label for="coffeeTime">Time:</label>
                         <input type="time" id="coffeeTime" required>
                     </div>
+
+                    <div class="form-group">
+                        <label for="coffeeDate">Date:</label>
+                        <input type="date" id="coffeeDate" required>
+                    </div>
                     
                     <div class="form-group">
                         <label for="coffeeNotes">Notes (optional):</label>
@@ -79,11 +86,44 @@
                 </form>
             </section>
 
+            <section class="data-tools">
+                <h3>Backup & Preferences</h3>
+                <div class="tool-actions">
+                    <button id="exportBtn" class="secondary-btn">Export Data</button>
+                    <button id="importBtn" class="secondary-btn">Import Data</button>
+                    <input type="file" id="importFile" accept="application/json" hidden>
+                </div>
+
+                <div class="preferences-grid">
+                    <div class="form-group">
+                        <label for="dailyGoal">Daily Goal (cups)</label>
+                        <input type="number" id="dailyGoal" min="1" max="20" value="3">
+                    </div>
+                    <div class="form-group">
+                        <label for="unitSetting">Size Units</label>
+                        <select id="unitSetting">
+                            <option value="oz">Ounces (oz)</option>
+                            <option value="ml">Milliliters (ml)</option>
+                        </select>
+                    </div>
+                    <label class="toggle-setting" for="darkModeToggle">
+                        <input type="checkbox" id="darkModeToggle">
+                        <span>Dark mode</span>
+                    </label>
+                </div>
+            </section>
+
             <!-- Coffee History -->
             <section class="coffee-history">
-                <h3>Today's Coffee History</h3>
+                <div class="section-header">
+                    <h3>Coffee History</h3>
+                    <div class="history-filters">
+                        <input type="date" id="historyDateFilter" aria-label="Filter history by date">
+                        <button id="clearFilterBtn" class="secondary-btn" type="button">Clear Filter</button>
+                    </div>
+                </div>
                 <div id="coffeeList" class="coffee-list">
-                    <p class="empty-message">No coffee recorded today. Add your first cup!</p>
+                    <p class="empty-message">No coffee recorded yet. Add your first cup!</p>
                 </div>
             </section>
 
@@ -98,6 +138,14 @@
                     <div class="stat-card">
                         <span class="stat-number" id="avgPerDay">0</span>
                         <span class="stat-label">Avg/Day</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="filteredCups">0</span>
+                        <span class="stat-label">Filtered Cups</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="filteredCaffeine">0 mg</span>
+                        <span class="stat-label">Filtered Caffeine</span>
                     </div>
                     <div class="stat-card">
                         <span class="stat-number" id="favoriteType">-</span>
