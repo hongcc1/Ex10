@@ -376,11 +376,6 @@ input:focus-visible {
     animation: pulseHighlight 1.2s ease;
 }
 
-.coffee-item.is-removing {
-    opacity: 0.4;
-    transform: scale(0.98);
-}
-
 /* Statistics */
 .stats-grid {
     display: grid;

@@ -211,6 +211,8 @@ class CoffeeTracker {
             const safeSize = this.escapeHtml(coffee.size);
             const safeNotes = this.escapeHtml(coffee.notes || '');
             const safeFormattedTime = this.escapeHtml(this.formatTime(coffee.time));
+            const safeEditLabel = this.escapeHtml(`Edit ${coffee.type} at ${this.formatTime(coffee.time)}`);
+            const safeDeleteLabel = this.escapeHtml(`Delete ${coffee.type} at ${this.formatTime(coffee.time)}`);
 
             return `
             <div class="coffee-item${coffee.id === this.lastActionCoffeeId ? ' is-highlighted' : ''}" data-coffee-id="${coffee.id}">
@@ -222,24 +224,13 @@ class CoffeeTracker {
                     </div>
                     <div class="coffee-actions">
                         <div class="coffee-time">${safeFormattedTime}</div>
-                        <button class="entry-btn edit-btn" type="button" data-action="edit" data-id="${coffee.id}" aria-label="Edit coffee entry">Edit</button>
-                        <button class="entry-btn delete-btn" type="button" data-action="delete" data-id="${coffee.id}" aria-label="Delete coffee entry">Delete</button>
+                        <button class="entry-btn edit-btn" type="button" data-action="edit" data-id="${coffee.id}" aria-label="${safeEditLabel}">Edit</button>
+                        <button class="entry-btn delete-btn" type="button" data-action="delete" data-id="${coffee.id}" aria-label="${safeDeleteLabel}">Delete</button>
                     </div>
                 </div>
             </div>
         `;
         }).join('');
-
-        todaysCoffee.forEach((coffee) => {
-            const item = coffeeList.querySelector(`[data-coffee-id="${coffee.id}"]`);
-            if (!item) {
-                return;
-            }
-
-            const formattedTime = this.formatTime(coffee.time);
-            item.querySelector('.edit-btn').setAttribute('aria-label', `Edit ${coffee.type} at ${formattedTime}`);
-            item.querySelector('.delete-btn').setAttribute('aria-label', `Delete ${coffee.type} at ${formattedTime}`);
-        });
 
         if (this.lastActionCoffeeId !== null) {
             if (this.highlightTimeoutId !== null) {
