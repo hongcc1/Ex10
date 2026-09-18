@@ -205,22 +205,29 @@ class CoffeeTracker {
             return timeB - timeA;
         });
 
-        coffeeList.innerHTML = todaysCoffee.map(coffee => `
+        coffeeList.innerHTML = todaysCoffee.map(coffee => {
+            const safeType = this.escapeHtml(coffee.type);
+            const safeSize = this.escapeHtml(coffee.size);
+            const safeNotes = this.escapeHtml(coffee.notes || '');
+            const safeFormattedTime = this.escapeHtml(this.formatTime(coffee.time));
+
+            return `
             <div class="coffee-item${coffee.id === this.lastActionCoffeeId ? ' is-highlighted' : ''}" data-coffee-id="${coffee.id}">
                 <div class="coffee-meta">
                     <div class="coffee-details">
-                        <div class="coffee-type">${coffee.type}</div>
-                        <div class="coffee-size">${coffee.size}</div>
-                        ${coffee.notes ? `<div class="coffee-notes">"${coffee.notes}"</div>` : ''}
+                        <div class="coffee-type">${safeType}</div>
+                        <div class="coffee-size">${safeSize}</div>
+                        ${coffee.notes ? `<div class="coffee-notes">"${safeNotes}"</div>` : ''}
                     </div>
                     <div class="coffee-actions">
-                        <div class="coffee-time">${this.formatTime(coffee.time)}</div>
-                        <button class="entry-btn edit-btn" type="button" data-action="edit" data-id="${coffee.id}" aria-label="Edit ${coffee.type} entry at ${this.formatTime(coffee.time)}">Edit</button>
-                        <button class="entry-btn delete-btn" type="button" data-action="delete" data-id="${coffee.id}" aria-label="Delete ${coffee.type} entry at ${this.formatTime(coffee.time)}">Delete</button>
+                        <div class="coffee-time">${safeFormattedTime}</div>
+                        <button class="entry-btn edit-btn" type="button" data-action="edit" data-id="${coffee.id}" aria-label="Edit coffee entry">Edit</button>
+                        <button class="entry-btn delete-btn" type="button" data-action="delete" data-id="${coffee.id}" aria-label="Delete coffee entry">Delete</button>
                     </div>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
 
         if (this.lastActionCoffeeId !== null) {
             if (this.highlightTimeoutId !== null) {
@@ -302,6 +309,15 @@ class CoffeeTracker {
 
     announceStatus(message) {
         document.getElementById('appStatus').textContent = message;
+    }
+
+    escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     // Export data function
