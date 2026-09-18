@@ -419,7 +419,7 @@ class CoffeeTracker {
         });
 
         const favoriteType = Object.keys(typeCount).reduce((a, b) => {
-            return typeCount[a] >= typeCount[b] ? a : b;
+            return typeCount[a] > typeCount[b] ? a : b;
         });
         document.getElementById('favoriteType').textContent = favoriteType;
     }
@@ -546,8 +546,10 @@ class CoffeeTracker {
         const link = document.createElement('a');
         link.href = url;
         link.download = 'coffee-tracker-backup.json';
+        document.body.appendChild(link);
         link.click();
-        setTimeout(() => URL.revokeObjectURL(url), 100);
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
         this.showNotification('Coffee data exported');
     }
 
