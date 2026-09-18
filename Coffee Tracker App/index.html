@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>☕ Coffee Tracker</h1>
+            <p>Keep track of your daily coffee consumption</p>
+        </header>
+
+        <main>
+            <!-- Coffee Counter Section -->
+            <section class="coffee-counter">
+                <div class="counter-display">
+                    <div class="counter-number">
+                        <span id="todayCount">0</span>
+                    </div>
+                    <p>Cups today</p>
+                </div>
+                
+                <div class="counter-controls">
+                    <button id="addCoffeeBtn" class="add-btn">+ Add Coffee</button>
+                    <button id="resetBtn" class="reset-btn">Reset Today</button>
+                </div>
+            </section>
+
+            <!-- Add Coffee Form -->
+            <section class="add-coffee-form" id="addCoffeeForm" style="display: none;">
+                <h3>Add a Coffee</h3>
+                <form id="coffeeForm">
+                    <div class="form-group">
+                        <label for="coffeeType">Coffee Type:</label>
+                        <select id="coffeeType" required>
+                            <option value="">Select type...</option>
+                            <option value="Espresso">Espresso</option>
+                            <option value="Americano">Americano</option>
+                            <option value="Latte">Latte</option>
+                            <option value="Cappuccino">Cappuccino</option>
+                            <option value="Macchiato">Macchiato</option>
+                            <option value="Mocha">Mocha</option>
+                            <option value="French Press">French Press</option>
+                            <option value="Cold Brew">Cold Brew</option>
+                            <option value="Drip Coffee">Drip Coffee</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="coffeeSize">Size:</label>
+                        <select id="coffeeSize" required>
+                            <option value="">Select size...</option>
+                            <option value="Small">Small (8 oz)</option>
+                            <option value="Medium">Medium (12 oz)</option>
+                            <option value="Large">Large (16 oz)</option>
+                            <option value="Extra Large">Extra Large (20 oz)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="coffeeTime">Time:</label>
+                        <input type="time" id="coffeeTime" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="coffeeNotes">Notes (optional):</label>
+                        <input type="text" id="coffeeNotes" placeholder="e.g., extra shot, decaf, etc.">
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="submit-btn">Add Coffee</button>
+                        <button type="button" id="cancelBtn" class="cancel-btn">Cancel</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Coffee History -->
+            <section class="coffee-history">
+                <h3>Today's Coffee History</h3>
+                <div id="coffeeList" class="coffee-list">
+                    <p class="empty-message">No coffee recorded today. Add your first cup!</p>
+                </div>
+            </section>
+
+            <!-- Statistics -->
+            <section class="statistics">
+                <h3>Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-number" id="totalCups">0</span>
+                        <span class="stat-label">Total Cups</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="avgPerDay">0</span>
+                        <span class="stat-label">Avg/Day</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="favoriteType">-</span>
+                        <span class="stat-label">Favorite Type</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 Coffee Tracker. Stay caffeinated! ☕</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

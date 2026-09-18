@@ -1,0 +1,422 @@
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+/* Header */
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    color: white;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+header p {
+    font-size: 1.1rem;
+    font-weight: 300;
+    opacity: 0.9;
+}
+
+/* Main content */
+main {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+/* Coffee Counter Section */
+.coffee-counter {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.coffee-counter::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1);
+}
+
+.counter-display {
+    margin-bottom: 20px;
+}
+
+.counter-number {
+    font-size: 4rem;
+    font-weight: 600;
+    color: #8b5a3c;
+    margin-bottom: 10px;
+}
+
+.counter-display p {
+    font-size: 1.2rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.counter-controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Buttons */
+.add-btn, .reset-btn, .submit-btn, .cancel-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.add-btn {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    color: white;
+}
+
+.add-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+}
+
+.reset-btn {
+    background: linear-gradient(135deg, #74b9ff, #0984e3);
+    color: white;
+}
+
+.reset-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(116, 185, 255, 0.3);
+}
+
+.submit-btn {
+    background: linear-gradient(135deg, #00b894, #00cec9);
+    color: white;
+}
+
+.submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 184, 148, 0.3);
+}
+
+.cancel-btn {
+    background: #ddd;
+    color: #666;
+}
+
+.cancel-btn:hover {
+    background: #ccc;
+    transform: translateY(-2px);
+}
+
+/* Add Coffee Form */
+.add-coffee-form {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    animation: slideIn 0.3s ease;
+}
+
+.add-coffee-form h3 {
+    color: #8b5a3c;
+    margin-bottom: 25px;
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #555;
+}
+
+.form-group select,
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: border-color 0.3s ease;
+}
+
+.form-group select:focus,
+.form-group input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 25px;
+    flex-wrap: wrap;
+}
+
+/* Coffee History */
+.coffee-history,
+.statistics {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.coffee-history h3,
+.statistics h3 {
+    color: #8b5a3c;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+.coffee-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.empty-message {
+    text-align: center;
+    color: #999;
+    font-style: italic;
+    padding: 40px 20px;
+}
+
+.coffee-item {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 15px;
+    border-left: 5px solid #ff6b6b;
+    position: relative;
+    transition: transform 0.3s ease;
+}
+
+.coffee-item:hover {
+    transform: translateX(5px);
+}
+
+.coffee-item:nth-child(even) {
+    border-left-color: #4ecdc4;
+}
+
+.coffee-item:nth-child(3n) {
+    border-left-color: #45b7d1;
+}
+
+.coffee-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.coffee-details {
+    flex: 1;
+}
+
+.coffee-type {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.coffee-size {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 3px;
+}
+
+.coffee-notes {
+    color: #888;
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+.coffee-time {
+    font-weight: 500;
+    color: #8b5a3c;
+    font-size: 1rem;
+}
+
+.delete-btn {
+    background: #ff7675;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-btn:hover {
+    background: #d63031;
+    transform: scale(1.1);
+}
+
+/* Statistics */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 25px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    font-weight: 300;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    margin-top: 40px;
+    padding: 20px;
+    color: white;
+    opacity: 0.8;
+}
+
+/* Animations */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.coffee-item {
+    animation: fadeIn 0.5s ease;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    
+    header h1 {
+        font-size: 2rem;
+    }
+    
+    .counter-number {
+        font-size: 3rem;
+    }
+    
+    .coffee-counter,
+    .add-coffee-form,
+    .coffee-history,
+    .statistics {
+        padding: 20px;
+    }
+    
+    .counter-controls {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .coffee-meta {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .coffee-time {
+        margin-top: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .add-btn, .reset-btn, .submit-btn, .cancel-btn {
+        width: 100%;
+        max-width: 200px;
+    }
+}
