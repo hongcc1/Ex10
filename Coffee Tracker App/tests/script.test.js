@@ -156,7 +156,7 @@ test('sanitizeCoffeeCollection keeps only valid normalized entries', () => {
         { id: '5', type: ' Latte ', size: 'Medium', time: '08:15', notes: '  oat milk  ', date: 'Thu Sep 18 2026' },
         { id: '', type: 'Espresso', size: 'Small', time: '07:00', notes: '', date: 'Thu Sep 18 2026' },
         { id: 'bad', type: 'Tea', size: 'Small', time: '08:15', date: 'Thu Sep 18 2026' },
-        { id: '6', type: 'Mocha', size: 'Large', time: '25:00', date: 'Thu Sep 18 2026' }
+        { id: 'bad-time', type: 'Mocha', size: 'Large', time: '25:00', date: 'Thu Sep 18 2026' }
     ], () => 1000, 'Thu Sep 18 2026');
 
     assert.deepEqual(sanitized, [

@@ -74,8 +74,10 @@ function sanitizeCoffeeCollection(data, getFallbackId = () => Date.now(), fallba
         return [];
     }
 
+    const fallbackIdBase = getFallbackId();
+
     return data
-        .map((entry, index) => sanitizeCoffeeEntry(entry, fallbackDate, getFallbackId() + index))
+        .map((entry, index) => sanitizeCoffeeEntry(entry, fallbackDate, fallbackIdBase + index))
         .filter(Boolean);
 }
 
@@ -506,7 +508,11 @@ class CoffeeTracker {
 
         this.schedule(() => {
             notification.style.animation = 'slideOutRight 0.3s ease';
-            this.schedule(() => {
+            const finalizeRemoval = typeof setTimeout === 'function'
+                ? setTimeout
+                : this.schedule;
+
+            finalizeRemoval(() => {
                 if (notification.parentNode) {
                     notification.parentNode.removeChild(notification);
                 }
