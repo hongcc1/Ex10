@@ -247,7 +247,7 @@ class CoffeeTracker {
             return;
         }
 
-        this.coffeeData = this.lastUndoState.coffeeData.map(entry => this.normalizeCoffeeEntry(entry)).filter(Boolean);
+        this.coffeeData = JSON.parse(JSON.stringify(this.lastUndoState.coffeeData));
         this.preferences = {
             ...this.defaultPreferences,
             ...this.lastUndoState.preferences
@@ -425,6 +425,10 @@ class CoffeeTracker {
     }
 
     formatTime(time24) {
+        if (typeof time24 !== 'string' || !/^\d{2}:\d{2}$/.test(time24)) {
+            return time24 || '';
+        }
+
         const [hours, minutes] = time24.split(':').map(Number);
         const hour12 = hours % 12 || 12;
         const ampm = hours >= 12 ? 'PM' : 'AM';
@@ -546,12 +550,10 @@ class CoffeeTracker {
         const link = document.createElement('a');
         link.href = url;
         link.download = 'coffee-tracker-backup.json';
-        link.addEventListener('click', () => {
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
-        }, { once: true });
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
         this.showNotification('Coffee data exported');
     }
 
