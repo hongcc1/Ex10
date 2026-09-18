@@ -161,7 +161,7 @@ class CoffeeTracker {
         }
 
         const action = this.currentEditingId ? 'edit' : 'add';
-        this.saveUndoState(action);
+        this.saveUndoState();
 
         if (this.currentEditingId) {
             this.coffeeData = this.coffeeData.map(coffee => coffee.id === this.currentEditingId
@@ -170,7 +170,7 @@ class CoffeeTracker {
             );
         } else {
             this.coffeeData.push({
-                id: Date.now() + Math.floor(Math.random() * 1000),
+                id: this.createCoffeeId(),
                 type,
                 size,
                 time,
@@ -197,7 +197,7 @@ class CoffeeTracker {
             return;
         }
 
-        this.saveUndoState('delete');
+        this.saveUndoState();
         this.coffeeData = this.coffeeData.filter(coffee => coffee.id !== id);
         this.saveData();
         this.updateDisplay();
@@ -217,16 +217,15 @@ class CoffeeTracker {
             return;
         }
 
-        this.saveUndoState('reset');
+        this.saveUndoState();
         this.coffeeData = this.coffeeData.filter(coffee => coffee.date !== today);
         this.saveData();
         this.updateDisplay();
         this.showNotification('Today\'s coffee count has been reset');
     }
 
-    saveUndoState(action) {
+    saveUndoState() {
         this.lastUndoState = {
-            action,
             coffeeData: JSON.parse(JSON.stringify(this.coffeeData)),
             preferences: { ...this.preferences }
         };
@@ -493,6 +492,14 @@ class CoffeeTracker {
             .slice(0, 10);
     }
 
+    createCoffeeId() {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+            return window.crypto.randomUUID();
+        }
+
+        return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
     normalizeCoffeeEntry(entry) {
         if (!entry || typeof entry !== 'object') {
             return null;
@@ -508,7 +515,9 @@ class CoffeeTracker {
         }
 
         return {
-            id: Number(entry.id) || Date.now() + Math.floor(Math.random() * 1000),
+            id: typeof entry.id === 'string' || typeof entry.id === 'number'
+                ? String(entry.id)
+                : this.createCoffeeId(),
             type,
             size,
             time,
@@ -568,18 +577,23 @@ class CoffeeTracker {
                 }
 
                 const normalizedData = importedData.map(entry => this.normalizeCoffeeEntry(entry)).filter(Boolean);
-                if (normalizedData.length !== importedData.length) {
-                    throw new Error('Invalid coffee entry detected');
+                if (normalizedData.length === 0 && importedData.length > 0) {
+                    throw new Error('No valid coffee entries found');
                 }
 
-                this.saveUndoState('import');
+                this.saveUndoState();
                 this.coffeeData = normalizedData;
                 this.preferences = importedPreferences;
                 this.saveData();
                 this.savePreferences();
                 this.applyPreferences();
                 this.updateDisplay();
-                this.showNotification('Data imported successfully!');
+
+                const skippedCount = importedData.length - normalizedData.length;
+                const importMessage = skippedCount > 0
+                    ? `Imported ${normalizedData.length} entries (${skippedCount} skipped)`
+                    : 'Data imported successfully!';
+                this.showNotification(importMessage);
             } catch (error) {
                 alert('Error importing data. Please make sure the file is valid.');
             } finally {
