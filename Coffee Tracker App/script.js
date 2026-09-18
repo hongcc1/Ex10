@@ -161,7 +161,7 @@ class CoffeeTracker {
         const date = document.getElementById('coffeeDate').value;
         const notes = document.getElementById('coffeeNotes').value.trim();
 
-        if (!type || !size || !time || !date) {
+        if (!this.isCoffeeFormValid({ type, size, time, date })) {
             alert('Please fill in all required fields');
             return;
         }
@@ -189,6 +189,10 @@ class CoffeeTracker {
         this.updateDisplay();
         this.hideAddForm();
         this.showNotification(isEditing ? 'Coffee updated successfully!' : 'Coffee added successfully! ☕');
+    }
+
+    isCoffeeFormValid({ type, size, time, date }) {
+        return Boolean(type && size && time && date);
     }
 
     startEditCoffee(id) {
@@ -587,7 +591,7 @@ class CoffeeTracker {
                     : 'Data imported successfully!';
                 this.showNotification(importMessage);
             } catch (error) {
-                alert('Error importing data. Please make sure the file is valid.');
+                alert(error.message || 'Error importing data. Please make sure the file is valid.');
             } finally {
                 event.target.value = '';
             }
@@ -652,11 +656,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tracker.showAddForm();
         }
 
-        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
-            if (event.shiftKey) {
-                return;
-            }
-
+        if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 'z') {
             const targetTag = event.target.tagName;
             const isFormField = ['INPUT', 'TEXTAREA', 'SELECT'].includes(targetTag);
             if (isFormField || event.target.isContentEditable) {
