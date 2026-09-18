@@ -9,13 +9,14 @@ body {
     font-family: 'Poppins', sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
-    color: #333;
+    color: #24303f;
+    line-height: 1.5;
 }
 
 .container {
-    max-width: 800px;
+    max-width: 880px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 24px;
     min-height: 100vh;
 }
 
@@ -44,6 +45,38 @@ main {
     display: flex;
     flex-direction: column;
     gap: 25px;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.section-header {
+    margin-bottom: 18px;
+}
+
+.section-header h2,
+.section-header h3 {
+    color: #8b5a3c;
+    margin-bottom: 8px;
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+.section-header p,
+.helper-text,
+.form-intro {
+    color: #536273;
+    text-align: center;
+    font-size: 0.98rem;
 }
 
 /* Coffee Counter Section */
@@ -80,7 +113,7 @@ main {
 
 .counter-display p {
     font-size: 1.2rem;
-    color: #666;
+    color: #475467;
     font-weight: 500;
 }
 
@@ -101,6 +134,7 @@ main {
     cursor: pointer;
     transition: all 0.3s ease;
     font-family: inherit;
+    min-height: 48px;
 }
 
 .add-btn {
@@ -134,13 +168,20 @@ main {
 }
 
 .cancel-btn {
-    background: #ddd;
-    color: #666;
+    background: #e5e7eb;
+    color: #364152;
 }
 
 .cancel-btn:hover {
-    background: #ccc;
+    background: #d0d5dd;
     transform: translateY(-2px);
+}
+
+button:focus-visible,
+select:focus-visible,
+input:focus-visible {
+    outline: 3px solid #1d4ed8;
+    outline-offset: 3px;
 }
 
 /* Add Coffee Form */
@@ -150,13 +191,7 @@ main {
     border-radius: 20px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     animation: slideIn 0.3s ease;
-}
-
-.add-coffee-form h3 {
-    color: #8b5a3c;
-    margin-bottom: 25px;
-    font-size: 1.5rem;
-    text-align: center;
+    border: 1px solid #e5e7eb;
 }
 
 .form-group {
@@ -167,18 +202,20 @@ main {
     display: block;
     margin-bottom: 8px;
     font-weight: 500;
-    color: #555;
+    color: #344054;
 }
 
 .form-group select,
 .form-group input {
     width: 100%;
-    padding: 12px 15px;
-    border: 2px solid #e0e0e0;
+    padding: 13px 15px;
+    border: 2px solid #d0d5dd;
     border-radius: 10px;
     font-size: 1rem;
     font-family: inherit;
-    transition: border-color 0.3s ease;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    color: #101828;
+    background: #fff;
 }
 
 .form-group select:focus,
@@ -207,10 +244,7 @@ main {
 
 .coffee-history h3,
 .statistics h3 {
-    color: #8b5a3c;
-    margin-bottom: 20px;
-    font-size: 1.5rem;
-    text-align: center;
+    margin-bottom: 0;
 }
 
 .coffee-list {
@@ -221,9 +255,21 @@ main {
 
 .empty-message {
     text-align: center;
-    color: #999;
-    font-style: italic;
-    padding: 40px 20px;
+    color: #475467;
+    padding: 32px 24px;
+    background: linear-gradient(135deg, #f8fafc, #eef2ff);
+    border: 1px dashed #b8c1ec;
+    border-radius: 16px;
+}
+
+.empty-message strong {
+    display: block;
+    color: #344054;
+    margin-bottom: 8px;
+}
+
+.empty-message p {
+    font-size: 0.95rem;
 }
 
 .coffee-item {
@@ -232,11 +278,12 @@ main {
     border-radius: 15px;
     border-left: 5px solid #ff6b6b;
     position: relative;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
 }
 
 .coffee-item:hover {
     transform: translateX(5px);
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
 }
 
 .coffee-item:nth-child(even) {
@@ -262,18 +309,18 @@ main {
 .coffee-type {
     font-weight: 600;
     font-size: 1.1rem;
-    color: #333;
+    color: #1f2937;
     margin-bottom: 5px;
 }
 
 .coffee-size {
-    color: #666;
+    color: #475467;
     font-size: 0.9rem;
     margin-bottom: 3px;
 }
 
 .coffee-notes {
-    color: #888;
+    color: #667085;
     font-size: 0.9rem;
     font-style: italic;
 }
@@ -284,24 +331,54 @@ main {
     font-size: 1rem;
 }
 
-.delete-btn {
-    background: #ff7675;
+.coffee-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.entry-btn {
     color: white;
     border: none;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
+    border-radius: 999px;
+    min-width: 42px;
+    min-height: 42px;
+    padding: 0 14px;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 0.95rem;
+    font-weight: 500;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
+.edit-btn {
+    background: #667eea;
+}
+
+.edit-btn:hover {
+    background: #4f63d2;
+    transform: translateY(-1px);
+}
+
+.delete-btn {
+    background: #ff7675;
+}
+
 .delete-btn:hover {
     background: #d63031;
-    transform: scale(1.1);
+    transform: translateY(-1px);
+}
+
+.coffee-item.is-highlighted {
+    box-shadow: 0 0 0 3px rgba(0, 184, 148, 0.18), 0 12px 24px rgba(15, 23, 42, 0.08);
+    animation: pulseHighlight 1.2s ease;
+}
+
+.coffee-item.is-removing {
+    opacity: 0.4;
+    transform: scale(0.98);
 }
 
 /* Statistics */
@@ -331,6 +408,29 @@ main {
     font-size: 0.9rem;
     opacity: 0.9;
     font-weight: 300;
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    max-width: min(320px, calc(100vw - 32px));
+    color: white;
+    padding: 15px 20px;
+    border-radius: 12px;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.2);
+    z-index: 1000;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    animation: slideInRight 0.3s ease;
+}
+
+.notification.success {
+    background: linear-gradient(135deg, #00b894, #00cec9);
+}
+
+.notification.info {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
 }
 
 /* Footer */
@@ -365,6 +465,22 @@ footer {
     }
 }
 
+@keyframes pulseHighlight {
+    0% {
+        transform: scale(0.98);
+    }
+    50% {
+        transform: scale(1.01);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.notification-slideout {
+    animation: slideOutRight 0.3s ease forwards;
+}
+
 .coffee-item {
     animation: fadeIn 0.5s ease;
 }
@@ -372,7 +488,7 @@ footer {
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {
-        padding: 15px;
+        padding: 16px;
     }
     
     header h1 {
@@ -392,12 +508,12 @@ footer {
     
     .counter-controls {
         flex-direction: column;
-        align-items: center;
+        align-items: stretch;
     }
     
     .form-actions {
         flex-direction: column;
-        align-items: center;
+        align-items: stretch;
     }
     
     .coffee-meta {
@@ -405,8 +521,9 @@ footer {
         align-items: flex-start;
     }
     
-    .coffee-time {
-        margin-top: 10px;
+    .coffee-actions {
+        width: 100%;
+        justify-content: space-between;
     }
 }
 
@@ -417,6 +534,28 @@ footer {
     
     .add-btn, .reset-btn, .submit-btn, .cancel-btn {
         width: 100%;
-        max-width: 200px;
+    }
+
+    .entry-btn {
+        flex: 1;
+    }
+
+    .notification {
+        left: 16px;
+        right: 16px;
+        top: auto;
+        bottom: 16px;
+        max-width: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
 }

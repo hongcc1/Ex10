@@ -15,8 +15,14 @@
         </header>
 
         <main>
+            <p class="sr-only" id="appStatus" aria-live="polite" aria-atomic="true"></p>
+
             <!-- Coffee Counter Section -->
             <section class="coffee-counter">
+                <div class="section-header">
+                    <h2>Today's Progress</h2>
+                    <p>Quickly log each cup and review your caffeine routine at a glance.</p>
+                </div>
                 <div class="counter-display">
                     <div class="counter-number">
                         <span id="todayCount">0</span>
@@ -25,14 +31,16 @@
                 </div>
                 
                 <div class="counter-controls">
-                    <button id="addCoffeeBtn" class="add-btn">+ Add Coffee</button>
-                    <button id="resetBtn" class="reset-btn">Reset Today</button>
+                    <button id="addCoffeeBtn" class="add-btn" type="button" aria-controls="addCoffeeForm" aria-expanded="false">+ Add Coffee</button>
+                    <button id="resetBtn" class="reset-btn" type="button">Reset Today</button>
                 </div>
+                <p class="helper-text">Tip: press Ctrl/Cmd + Enter to open the form, or Escape to close it.</p>
             </section>
 
             <!-- Add Coffee Form -->
-            <section class="add-coffee-form" id="addCoffeeForm" style="display: none;">
-                <h3>Add a Coffee</h3>
+            <section class="add-coffee-form" id="addCoffeeForm" hidden aria-labelledby="formTitle">
+                <h3 id="formTitle" tabindex="-1">Add a Coffee</h3>
+                <p class="form-intro">Choose the type, size, and time to keep your history accurate.</p>
                 <form id="coffeeForm">
                     <div class="form-group">
                         <label for="coffeeType">Coffee Type:</label>
@@ -81,15 +89,24 @@
 
             <!-- Coffee History -->
             <section class="coffee-history">
-                <h3>Today's Coffee History</h3>
+                <div class="section-header">
+                    <h3>Today's Coffee History</h3>
+                    <p>Your most recent cups appear first so the latest update is easy to spot.</p>
+                </div>
                 <div id="coffeeList" class="coffee-list">
-                    <p class="empty-message">No coffee recorded today. Add your first cup!</p>
+                    <div class="empty-message">
+                        <strong>No coffee recorded today.</strong>
+                        <p>Add your first cup to start building today's history and statistics.</p>
+                    </div>
                 </div>
             </section>
 
             <!-- Statistics -->
             <section class="statistics">
-                <h3>Statistics</h3>
+                <div class="section-header">
+                    <h3>Statistics</h3>
+                    <p>See your running totals and most common coffee choice.</p>
+                </div>
                 <div class="stats-grid">
                     <div class="stat-card">
                         <span class="stat-number" id="totalCups">0</span>
