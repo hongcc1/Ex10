@@ -4,6 +4,7 @@ class CoffeeTracker {
         this.editingCoffeeId = null;
         this.lastActionCoffeeId = null;
         this.highlightTimeoutId = null;
+        this.statusTimeoutId = null;
         this.init();
     }
 
@@ -229,6 +230,17 @@ class CoffeeTracker {
         `;
         }).join('');
 
+        todaysCoffee.forEach((coffee) => {
+            const item = coffeeList.querySelector(`[data-coffee-id="${coffee.id}"]`);
+            if (!item) {
+                return;
+            }
+
+            const formattedTime = this.formatTime(coffee.time);
+            item.querySelector('.edit-btn').setAttribute('aria-label', `Edit ${coffee.type} at ${formattedTime}`);
+            item.querySelector('.delete-btn').setAttribute('aria-label', `Delete ${coffee.type} at ${formattedTime}`);
+        });
+
         if (this.lastActionCoffeeId !== null) {
             if (this.highlightTimeoutId !== null) {
                 clearTimeout(this.highlightTimeoutId);
@@ -308,7 +320,15 @@ class CoffeeTracker {
     }
 
     announceStatus(message) {
-        document.getElementById('appStatus').textContent = message;
+        const statusRegion = document.getElementById('appStatus');
+        statusRegion.textContent = '';
+        if (this.statusTimeoutId !== null) {
+            clearTimeout(this.statusTimeoutId);
+        }
+        this.statusTimeoutId = setTimeout(() => {
+            statusRegion.textContent = message;
+            this.statusTimeoutId = null;
+        }, 0);
     }
 
     escapeHtml(value) {
