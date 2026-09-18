@@ -9,6 +9,12 @@ class CoffeeTracker {
             darkMode: false,
             unit: 'oz'
         };
+        this.sizeLabels = {
+            Small: { oz: 'Small (8 oz)', ml: 'Small (240 ml)' },
+            Medium: { oz: 'Medium (12 oz)', ml: 'Medium (355 ml)' },
+            Large: { oz: 'Large (16 oz)', ml: 'Large (475 ml)' },
+            'Extra Large': { oz: 'Extra Large (20 oz)', ml: 'Extra Large (590 ml)' }
+        };
         this.currentEditingId = null;
         this.lastUndoState = null;
         this.coffeeData = this.loadCoffeeData();
@@ -451,29 +457,15 @@ class CoffeeTracker {
     }
 
     updateSizeOptionLabels() {
-        const labels = {
-            Small: { oz: 'Small (8 oz)', ml: 'Small (240 ml)' },
-            Medium: { oz: 'Medium (12 oz)', ml: 'Medium (355 ml)' },
-            Large: { oz: 'Large (16 oz)', ml: 'Large (475 ml)' },
-            'Extra Large': { oz: 'Extra Large (20 oz)', ml: 'Extra Large (590 ml)' }
-        };
-
         document.querySelectorAll('#coffeeSize option').forEach(option => {
-            if (labels[option.value]) {
-                option.textContent = labels[option.value][this.preferences.unit];
+            if (this.sizeLabels[option.value]) {
+                option.textContent = this.sizeLabels[option.value][this.preferences.unit];
             }
         });
     }
 
     getSizeLabel(size) {
-        const sizeMap = {
-            Small: { oz: 'Small (8 oz)', ml: 'Small (240 ml)' },
-            Medium: { oz: 'Medium (12 oz)', ml: 'Medium (355 ml)' },
-            Large: { oz: 'Large (16 oz)', ml: 'Large (475 ml)' },
-            'Extra Large': { oz: 'Extra Large (20 oz)', ml: 'Extra Large (590 ml)' }
-        };
-
-        return sizeMap[size] ? sizeMap[size][this.preferences.unit] : size;
+        return this.sizeLabels[size] ? this.sizeLabels[size][this.preferences.unit] : size;
     }
 
     getValidatedDailyGoal() {
@@ -551,7 +543,7 @@ class CoffeeTracker {
         link.href = url;
         link.download = 'coffee-tracker-backup.json';
         link.click();
-        URL.revokeObjectURL(url);
+        setTimeout(() => URL.revokeObjectURL(url), 0);
         this.showNotification('Coffee data exported');
     }
 
