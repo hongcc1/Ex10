@@ -10,6 +10,7 @@ body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
     color: #333;
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 .container {
@@ -92,7 +93,7 @@ main {
 }
 
 /* Buttons */
-.add-btn, .reset-btn, .submit-btn, .cancel-btn {
+.add-btn, .reset-btn, .submit-btn, .cancel-btn, .secondary-btn, .edit-btn {
     padding: 12px 24px;
     border: none;
     border-radius: 25px;
@@ -141,6 +142,23 @@ main {
 .cancel-btn:hover {
     background: #ccc;
     transform: translateY(-2px);
+}
+
+.secondary-btn {
+    background: #f1f3f5;
+    color: #555;
+}
+
+.secondary-btn:hover,
+.edit-btn:hover {
+    background: #dee2e6;
+    transform: translateY(-2px);
+}
+
+.secondary-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none;
 }
 
 /* Add Coffee Form */
@@ -198,7 +216,8 @@ main {
 
 /* Coffee History */
 .coffee-history,
-.statistics {
+.statistics,
+.data-tools {
     background: white;
     padding: 30px;
     border-radius: 20px;
@@ -206,11 +225,68 @@ main {
 }
 
 .coffee-history h3,
-.statistics h3 {
+.statistics h3,
+.data-tools h3 {
     color: #8b5a3c;
     margin-bottom: 20px;
     font-size: 1.5rem;
     text-align: center;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.section-header h3 {
+    margin-bottom: 0;
+}
+
+.history-filters,
+.tool-actions,
+.preferences-grid {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.history-filters input,
+.preferences-grid input,
+.preferences-grid select {
+    min-height: 44px;
+}
+
+.preferences-grid {
+    justify-content: space-between;
+}
+
+.preferences-grid .form-group {
+    flex: 1 1 180px;
+    margin-bottom: 0;
+}
+
+.toggle-setting {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    color: #555;
+}
+
+.tool-actions {
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.goal-status {
+    margin-top: 16px;
+    color: #666;
+    font-weight: 500;
 }
 
 .coffee-list {
@@ -282,6 +358,25 @@ main {
     font-weight: 500;
     color: #8b5a3c;
     font-size: 1rem;
+}
+
+.coffee-date {
+    color: #666;
+    font-size: 0.85rem;
+    margin-top: 6px;
+}
+
+.coffee-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.edit-btn {
+    background: #f1f3f5;
+    color: #555;
+    padding: 8px 14px;
+    font-size: 0.9rem;
 }
 
 .delete-btn {
@@ -369,6 +464,49 @@ footer {
     animation: fadeIn 0.5s ease;
 }
 
+body.dark-mode {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    color: #e5e7eb;
+}
+
+body.dark-mode .coffee-counter,
+body.dark-mode .add-coffee-form,
+body.dark-mode .coffee-history,
+body.dark-mode .statistics,
+body.dark-mode .data-tools {
+    background: #1f2937;
+    color: #e5e7eb;
+}
+
+body.dark-mode .counter-display p,
+body.dark-mode .goal-status,
+body.dark-mode .coffee-size,
+body.dark-mode .coffee-date,
+body.dark-mode .coffee-notes,
+body.dark-mode .toggle-setting,
+body.dark-mode .form-group label {
+    color: #cbd5e1;
+}
+
+body.dark-mode .coffee-type,
+body.dark-mode .counter-number,
+body.dark-mode .coffee-time {
+    color: #fbbf24;
+}
+
+body.dark-mode .coffee-item {
+    background: #111827;
+}
+
+body.dark-mode .form-group select,
+body.dark-mode .form-group input,
+body.dark-mode .secondary-btn,
+body.dark-mode .edit-btn {
+    background: #111827;
+    color: #e5e7eb;
+    border-color: #374151;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {
@@ -386,7 +524,8 @@ footer {
     .coffee-counter,
     .add-coffee-form,
     .coffee-history,
-    .statistics {
+    .statistics,
+    .data-tools {
         padding: 20px;
     }
     
@@ -404,6 +543,15 @@ footer {
         flex-direction: column;
         align-items: flex-start;
     }
+
+    .section-header,
+    .history-filters,
+    .tool-actions,
+    .preferences-grid,
+    .coffee-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
     
     .coffee-time {
         margin-top: 10px;
@@ -415,7 +563,7 @@ footer {
         grid-template-columns: 1fr;
     }
     
-    .add-btn, .reset-btn, .submit-btn, .cancel-btn {
+    .add-btn, .reset-btn, .submit-btn, .cancel-btn, .secondary-btn, .edit-btn {
         width: 100%;
         max-width: 200px;
     }
