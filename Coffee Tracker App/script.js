@@ -297,7 +297,7 @@ class CoffeeTracker {
         const remaining = Math.max(dailyGoal - todaysCount, 0);
         const message = remaining === 0
             ? `Daily goal met: ${todaysCount} / ${dailyGoal} cups`
-            : `Daily goal: ${todaysCount} / ${dailyGoal} cups`;
+            : `Daily goal: ${todaysCount} / ${dailyGoal} cups (${remaining} left)`;
         document.getElementById('goalStatus').textContent = message;
     }
 
@@ -543,7 +543,7 @@ class CoffeeTracker {
         link.href = url;
         link.download = 'coffee-tracker-backup.json';
         link.click();
-        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        setTimeout(() => URL.revokeObjectURL(url), 100);
         this.showNotification('Coffee data exported');
     }
 
@@ -653,6 +653,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
+            if (event.shiftKey) {
+                return;
+            }
+
             const targetTag = event.target.tagName;
             const isFormField = ['INPUT', 'TEXTAREA', 'SELECT'].includes(targetTag);
             if (isFormField || event.target.isContentEditable) {
