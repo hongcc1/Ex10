@@ -1,6 +1,10 @@
 class CoffeeTracker {
     constructor() {
         this.coffeeData = JSON.parse(localStorage.getItem('coffeeData')) || [];
+        this.editingCoffeeId = null;
+        this.lastActionCoffeeId = null;
+        this.highlightTimeoutId = null;
+        this.statusTimeoutId = null;
         this.init();
     }
 
@@ -31,17 +35,51 @@ class CoffeeTracker {
             e.preventDefault();
             this.addCoffee();
         });
+
+        document.getElementById('coffeeList').addEventListener('click', (e) => {
+            const actionButton = e.target.closest('button[data-action]');
+            if (!actionButton) {
+                return;
+            }
+
+            const coffeeId = Number(actionButton.dataset.id);
+            if (actionButton.dataset.action === 'edit') {
+                this.editCoffee(coffeeId);
+                return;
+            }
+
+            if (actionButton.dataset.action === 'delete') {
+                this.deleteCoffee(coffeeId);
+            }
+        });
     }
 
     showAddForm() {
-        document.getElementById('addCoffeeForm').style.display = 'block';
-        document.getElementById('addCoffeeForm').scrollIntoView({ behavior: 'smooth' });
-        this.setCurrentTime();
+        const formSection = document.getElementById('addCoffeeForm');
+        const addButton = document.getElementById('addCoffeeBtn');
+        const isEditing = this.editingCoffeeId !== null;
+
+        formSection.hidden = false;
+        addButton.setAttribute('aria-expanded', 'true');
+        formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (!isEditing) {
+            this.setCurrentTime();
+            document.getElementById('coffeeType').focus();
+            return;
+        }
+
+        document.getElementById('formTitle').focus();
     }
 
     hideAddForm() {
-        document.getElementById('addCoffeeForm').style.display = 'none';
+        const formSection = document.getElementById('addCoffeeForm');
+        formSection.hidden = true;
+        document.getElementById('addCoffeeBtn').setAttribute('aria-expanded', 'false');
+        this.editingCoffeeId = null;
+        document.getElementById('formTitle').textContent = 'Add a Coffee';
+        document.querySelector('.submit-btn').textContent = 'Add Coffee';
         this.clearForm();
+        document.getElementById('addCoffeeBtn').focus();
     }
 
     setCurrentTime() {
@@ -55,6 +93,9 @@ class CoffeeTracker {
         const size = document.getElementById('coffeeSize').value;
         const time = document.getElementById('coffeeTime').value;
         const notes = document.getElementById('coffeeNotes').value;
+        const originalCoffee = this.editingCoffeeId !== null
+            ? this.coffeeData.find((entry) => entry.id === this.editingCoffeeId)
+            : null;
 
         if (!type || !size || !time) {
             alert('Please fill in all required fields');
@@ -62,29 +103,59 @@ class CoffeeTracker {
         }
 
         const coffee = {
-            id: Date.now(),
+            id: this.editingCoffeeId !== null ? this.editingCoffeeId : Date.now(),
             type,
             size,
             time,
             notes,
-            date: new Date().toDateString()
+            date: originalCoffee ? originalCoffee.date : new Date().toDateString()
         };
 
-        this.coffeeData.push(coffee);
+        const isEditing = this.editingCoffeeId !== null;
+
+        if (isEditing) {
+            this.coffeeData = this.coffeeData.map((entry) =>
+                entry.id === this.editingCoffeeId ? coffee : entry
+            );
+        } else {
+            this.coffeeData.push(coffee);
+        }
+
+        this.lastActionCoffeeId = coffee.id;
         this.saveData();
         this.updateDisplay();
         this.hideAddForm();
-        
-        // Show success message
-        this.showNotification('Coffee added successfully! ☕');
+
+        this.showNotification(
+            isEditing ? 'Coffee entry updated successfully!' : 'Coffee added successfully! ☕',
+            isEditing ? 'info' : 'success'
+        );
+    }
+
+    editCoffee(id) {
+        const coffee = this.coffeeData.find((entry) => entry.id === id);
+        if (!coffee) {
+            return;
+        }
+
+        this.editingCoffeeId = id;
+        document.getElementById('formTitle').textContent = 'Edit Coffee Entry';
+        document.querySelector('.submit-btn').textContent = 'Save Changes';
+        document.getElementById('coffeeType').value = coffee.type;
+        document.getElementById('coffeeSize').value = coffee.size;
+        document.getElementById('coffeeTime').value = coffee.time;
+        document.getElementById('coffeeNotes').value = coffee.notes || '';
+        this.showAddForm();
+        this.announceStatus(`Editing ${coffee.type} entry from ${this.formatTime(coffee.time)}.`);
     }
 
     deleteCoffee(id) {
         if (confirm('Are you sure you want to delete this coffee entry?')) {
+            this.lastActionCoffeeId = null;
             this.coffeeData = this.coffeeData.filter(coffee => coffee.id !== id);
             this.saveData();
             this.updateDisplay();
-            this.showNotification('Coffee entry deleted');
+            this.showNotification('Coffee entry deleted', 'info');
         }
     }
 
@@ -94,7 +165,7 @@ class CoffeeTracker {
             this.coffeeData = this.coffeeData.filter(coffee => coffee.date !== today);
             this.saveData();
             this.updateDisplay();
-            this.showNotification('Today\'s coffee count has been reset');
+            this.showNotification('Today\'s coffee count has been reset', 'info');
         }
     }
 
@@ -119,7 +190,12 @@ class CoffeeTracker {
         const todaysCoffee = this.getTodaysCoffee();
 
         if (todaysCoffee.length === 0) {
-            coffeeList.innerHTML = '<p class="empty-message">No coffee recorded today. Add your first cup!</p>';
+            coffeeList.innerHTML = `
+                <div class="empty-message">
+                    <strong>No coffee recorded today.</strong>
+                    <p>Add your first cup to start building today's history and statistics.</p>
+                </div>
+            `;
             return;
         }
 
@@ -130,21 +206,48 @@ class CoffeeTracker {
             return timeB - timeA;
         });
 
-        coffeeList.innerHTML = todaysCoffee.map(coffee => `
-            <div class="coffee-item">
+        coffeeList.innerHTML = todaysCoffee.map(coffee => {
+            const safeType = this.escapeHtml(coffee.type);
+            const safeSize = this.escapeHtml(coffee.size);
+            const safeNotes = this.escapeHtml(coffee.notes || '');
+            const safeFormattedTime = this.escapeHtml(this.formatTime(coffee.time));
+            const safeEditLabel = this.escapeHtml(`Edit ${coffee.type} at ${this.formatTime(coffee.time)}`);
+            const safeDeleteLabel = this.escapeHtml(`Delete ${coffee.type} at ${this.formatTime(coffee.time)}`);
+
+            return `
+            <div class="coffee-item${coffee.id === this.lastActionCoffeeId ? ' is-highlighted' : ''}" data-coffee-id="${coffee.id}">
                 <div class="coffee-meta">
                     <div class="coffee-details">
-                        <div class="coffee-type">${coffee.type}</div>
-                        <div class="coffee-size">${coffee.size}</div>
-                        ${coffee.notes ? `<div class="coffee-notes">"${coffee.notes}"</div>` : ''}
+                        <div class="coffee-type">${safeType}</div>
+                        <div class="coffee-size">${safeSize}</div>
+                        ${coffee.notes ? `<div class="coffee-notes">"${safeNotes}"</div>` : ''}
                     </div>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <div class="coffee-time">${this.formatTime(coffee.time)}</div>
-                        <button class="delete-btn" onclick="tracker.deleteCoffee(${coffee.id})" title="Delete this entry">×</button>
+                    <div class="coffee-actions">
+                        <div class="coffee-time">${safeFormattedTime}</div>
+                        <button class="entry-btn edit-btn" type="button" data-action="edit" data-id="${coffee.id}" aria-label="${safeEditLabel}">Edit</button>
+                        <button class="entry-btn delete-btn" type="button" data-action="delete" data-id="${coffee.id}" aria-label="${safeDeleteLabel}">Delete</button>
                     </div>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
+
+        if (this.lastActionCoffeeId !== null) {
+            if (this.highlightTimeoutId !== null) {
+                clearTimeout(this.highlightTimeoutId);
+            }
+            const highlightedCoffeeId = this.lastActionCoffeeId;
+            this.highlightTimeoutId = setTimeout(() => {
+                const highlightedItem = document.querySelector(`[data-coffee-id="${highlightedCoffeeId}"]`);
+                if (highlightedItem) {
+                    highlightedItem.classList.remove('is-highlighted');
+                }
+                if (this.lastActionCoffeeId === highlightedCoffeeId) {
+                    this.lastActionCoffeeId = null;
+                }
+                this.highlightTimeoutId = null;
+            }, 1400);
+        }
     }
 
     updateStatistics() {
@@ -189,53 +292,43 @@ class CoffeeTracker {
         localStorage.setItem('coffeeData', JSON.stringify(this.coffeeData));
     }
 
-    showNotification(message) {
-        // Create a simple notification
+    showNotification(message, type = 'success') {
         const notification = document.createElement('div');
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #4CAF50;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 1000;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 500;
-            animation: slideInRight 0.3s ease;
-        `;
-        
-        // Add CSS animation
-        if (!document.querySelector('#notification-styles')) {
-            const style = document.createElement('style');
-            style.id = 'notification-styles';
-            style.textContent = `
-                @keyframes slideInRight {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-                @keyframes slideOutRight {
-                    from { transform: translateX(0); opacity: 1; }
-                    to { transform: translateX(100%); opacity: 0; }
-                }
-            `;
-            document.head.appendChild(style);
-        }
+        notification.className = `notification ${type}`;
 
         notification.textContent = message;
         document.body.appendChild(notification);
+        this.announceStatus(message);
 
-        // Remove notification after 3 seconds
         setTimeout(() => {
-            notification.style.animation = 'slideOutRight 0.3s ease';
+            notification.classList.add('notification-slideout');
             setTimeout(() => {
                 if (notification.parentNode) {
                     notification.parentNode.removeChild(notification);
                 }
             }, 300);
         }, 3000);
+    }
+
+    announceStatus(message) {
+        const statusRegion = document.getElementById('appStatus');
+        statusRegion.textContent = '';
+        if (this.statusTimeoutId !== null) {
+            clearTimeout(this.statusTimeoutId);
+        }
+        this.statusTimeoutId = setTimeout(() => {
+            statusRegion.textContent = message;
+            this.statusTimeoutId = null;
+        }, 0);
+    }
+
+    escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     // Export data function
@@ -291,7 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Escape to close form
         if (e.key === 'Escape') {
             const form = document.getElementById('addCoffeeForm');
-            if (form.style.display !== 'none') {
+            if (!form.hidden) {
                 tracker.hideAddForm();
             }
         }
