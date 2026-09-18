@@ -213,7 +213,9 @@ class CoffeeTracker {
 
         this.elements.coffeeList.addEventListener('click', (event) => {
             const target = event.target;
-            const button = target && target.className === 'delete-btn' ? target : null;
+            const button = target && target.classList && target.classList.contains('delete-btn')
+                ? target
+                : null;
 
             if (!button) {
                 return;

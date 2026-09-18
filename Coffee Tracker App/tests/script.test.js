@@ -67,6 +67,11 @@ function createMockElement(tagName = 'div', ownerDocument = null) {
             }
 
             return this._textContent;
+        },
+        get classList() {
+            return {
+                contains: (className) => this.className.split(/\s+/).includes(className)
+            };
         }
     };
 }
