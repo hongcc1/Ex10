@@ -284,6 +284,12 @@ main {
     font-size: 1rem;
 }
 
+.coffee-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .delete-btn {
     background: #ff7675;
     color: white;
