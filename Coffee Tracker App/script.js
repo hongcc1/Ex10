@@ -60,7 +60,7 @@ function sanitizeCoffeeEntry(entry, fallbackDate = new Date().toDateString(), fa
     const numericId = Number(entry.id);
 
     return {
-        id: Number.isFinite(numericId) ? numericId : fallbackId,
+        id: Number.isFinite(numericId) && numericId > 0 ? numericId : fallbackId,
         type,
         size,
         time,
@@ -297,10 +297,11 @@ class CoffeeTracker {
             return false;
         }
 
+        const previousCoffeeData = this.coffeeData;
         this.coffeeData = [...this.coffeeData, validation.coffee];
 
         if (!this.saveData()) {
-            this.coffeeData.pop();
+            this.coffeeData = previousCoffeeData;
             return false;
         }
 

@@ -154,6 +154,7 @@ test('loadCoffeeData falls back safely when local storage data is invalid', () =
 test('sanitizeCoffeeCollection keeps only valid normalized entries', () => {
     const sanitized = sanitizeCoffeeCollection([
         { id: '5', type: ' Latte ', size: 'Medium', time: '08:15', notes: '  oat milk  ', date: 'Thu Sep 18 2026' },
+        { id: '', type: 'Espresso', size: 'Small', time: '07:00', notes: '', date: 'Thu Sep 18 2026' },
         { id: 'bad', type: 'Tea', size: 'Small', time: '08:15', date: 'Thu Sep 18 2026' },
         { id: '6', type: 'Mocha', size: 'Large', time: '25:00', date: 'Thu Sep 18 2026' }
     ], () => 1000, 'Thu Sep 18 2026');
@@ -165,6 +166,14 @@ test('sanitizeCoffeeCollection keeps only valid normalized entries', () => {
             size: 'Medium',
             time: '08:15',
             notes: 'oat milk',
+            date: 'Thu Sep 18 2026'
+        },
+        {
+            id: 1001,
+            type: 'Espresso',
+            size: 'Small',
+            time: '07:00',
+            notes: '',
             date: 'Thu Sep 18 2026'
         }
     ]);
@@ -212,6 +221,7 @@ test('CoffeeTracker adds a coffee, updates statistics, and renders safe text con
     assert.equal(document.getElementById('favoriteType').textContent, 'Latte');
     assert.equal(document.getElementById('coffeeList').children.length, 1);
     assert.match(document.getElementById('coffeeList').children[0].textContent, /<b>extra shot<\/b>/);
+    assert.equal(document.getElementById('coffeeList').children[0].children[0].children[0].children.length, 3);
     assert.equal(document.getElementById('addCoffeeForm').style.display, 'none');
     assert.equal(document.body.children.at(-1).textContent, 'Coffee added successfully! ☕');
 
