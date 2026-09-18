@@ -3,6 +3,7 @@ class CoffeeTracker {
         this.coffeeData = JSON.parse(localStorage.getItem('coffeeData')) || [];
         this.editingCoffeeId = null;
         this.lastActionCoffeeId = null;
+        this.highlightTimeoutId = null;
         this.init();
     }
 
@@ -55,15 +56,18 @@ class CoffeeTracker {
     showAddForm() {
         const formSection = document.getElementById('addCoffeeForm');
         const addButton = document.getElementById('addCoffeeBtn');
+        const isEditing = this.editingCoffeeId !== null;
 
         formSection.hidden = false;
         addButton.setAttribute('aria-expanded', 'true');
         formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        if (this.editingCoffeeId === null) {
+        if (!isEditing) {
             this.setCurrentTime();
+            document.getElementById('coffeeType').focus();
+            return;
         }
+
         document.getElementById('formTitle').focus();
-        document.getElementById('coffeeType').focus();
     }
 
     hideAddForm() {
@@ -88,6 +92,9 @@ class CoffeeTracker {
         const size = document.getElementById('coffeeSize').value;
         const time = document.getElementById('coffeeTime').value;
         const notes = document.getElementById('coffeeNotes').value;
+        const originalCoffee = this.editingCoffeeId !== null
+            ? this.coffeeData.find((entry) => entry.id === this.editingCoffeeId)
+            : null;
 
         if (!type || !size || !time) {
             alert('Please fill in all required fields');
@@ -95,12 +102,12 @@ class CoffeeTracker {
         }
 
         const coffee = {
-            id: this.editingCoffeeId || Date.now(),
+            id: this.editingCoffeeId !== null ? this.editingCoffeeId : Date.now(),
             type,
             size,
             time,
             notes,
-            date: new Date().toDateString()
+            date: originalCoffee ? originalCoffee.date : new Date().toDateString()
         };
 
         const isEditing = this.editingCoffeeId !== null;
@@ -216,8 +223,11 @@ class CoffeeTracker {
         `).join('');
 
         if (this.lastActionCoffeeId !== null) {
+            if (this.highlightTimeoutId !== null) {
+                clearTimeout(this.highlightTimeoutId);
+            }
             const highlightedCoffeeId = this.lastActionCoffeeId;
-            setTimeout(() => {
+            this.highlightTimeoutId = setTimeout(() => {
                 const highlightedItem = document.querySelector(`[data-coffee-id="${highlightedCoffeeId}"]`);
                 if (highlightedItem) {
                     highlightedItem.classList.remove('is-highlighted');
@@ -225,6 +235,7 @@ class CoffeeTracker {
                 if (this.lastActionCoffeeId === highlightedCoffeeId) {
                     this.lastActionCoffeeId = null;
                 }
+                this.highlightTimeoutId = null;
             }, 1400);
         }
     }
@@ -274,24 +285,6 @@ class CoffeeTracker {
     showNotification(message, type = 'success') {
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
-        notification.setAttribute('role', 'status');
-        notification.setAttribute('aria-live', 'polite');
-
-        if (!document.querySelector('#notification-styles')) {
-            const style = document.createElement('style');
-            style.id = 'notification-styles';
-            style.textContent = `
-                @keyframes slideInRight {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-                @keyframes slideOutRight {
-                    from { transform: translateX(0); opacity: 1; }
-                    to { transform: translateX(100%); opacity: 0; }
-                }
-            `;
-            document.head.appendChild(style);
-        }
 
         notification.textContent = message;
         document.body.appendChild(notification);
