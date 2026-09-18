@@ -508,11 +508,7 @@ class CoffeeTracker {
 
         this.schedule(() => {
             notification.style.animation = 'slideOutRight 0.3s ease';
-            const finalizeRemoval = typeof setTimeout === 'function'
-                ? setTimeout
-                : this.schedule;
-
-            finalizeRemoval(() => {
+            this.schedule(() => {
                 if (notification.parentNode) {
                     notification.parentNode.removeChild(notification);
                 }

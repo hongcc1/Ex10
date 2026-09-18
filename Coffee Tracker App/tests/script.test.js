@@ -145,6 +145,21 @@ function createMemoryStorage(initialValue = null) {
     };
 }
 
+function createQueuedScheduler() {
+    const callbacks = [];
+
+    return {
+        schedule(callback) {
+            callbacks.push(callback);
+        },
+        runAll() {
+            while (callbacks.length > 0) {
+                callbacks.shift()();
+            }
+        }
+    };
+}
+
 test('loadCoffeeData falls back safely when local storage data is invalid', () => {
     const storage = createMemoryStorage('{not-valid-json');
 
@@ -197,6 +212,7 @@ test('calculateStatistics and sortCoffeeByTimeDesc return stable core app data',
 test('CoffeeTracker adds a coffee, updates statistics, and renders safe text content', () => {
     const document = createMockDocument();
     const storage = createMemoryStorage();
+    const scheduler = createQueuedScheduler();
     const alerts = [];
     const now = new Date('2026-09-18T08:30:00');
     const tracker = new CoffeeTracker({
@@ -205,7 +221,7 @@ test('CoffeeTracker adds a coffee, updates statistics, and renders safe text con
         alert: (message) => alerts.push(message),
         confirm: () => true,
         now: () => now,
-        schedule: () => {}
+        schedule: (callback) => scheduler.schedule(callback)
     });
 
     document.getElementById('coffeeType').value = 'Latte';
@@ -224,6 +240,8 @@ test('CoffeeTracker adds a coffee, updates statistics, and renders safe text con
     assert.equal(document.getElementById('coffeeList').children[0].children[0].children[0].children.length, 3);
     assert.equal(document.getElementById('addCoffeeForm').style.display, 'none');
     assert.equal(document.body.children.at(-1).textContent, 'Coffee added successfully! ☕');
+    scheduler.runAll();
+    assert.equal(document.body.children.length, 0);
 
     const savedEntries = JSON.parse(storage.getItem('coffeeData'));
     assert.equal(savedEntries.length, 1);
