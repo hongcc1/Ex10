@@ -166,10 +166,10 @@ class CoffeeTracker {
             return;
         }
 
-        const action = this.currentEditingId ? 'edit' : 'add';
+        const isEditing = Boolean(this.currentEditingId);
         this.saveUndoState();
 
-        if (this.currentEditingId) {
+        if (isEditing) {
             this.coffeeData = this.coffeeData.map(coffee => coffee.id === this.currentEditingId
                 ? { ...coffee, type, size, time, date, notes }
                 : coffee
@@ -188,7 +188,7 @@ class CoffeeTracker {
         this.saveData();
         this.updateDisplay();
         this.hideAddForm();
-        this.showNotification(action === 'edit' ? 'Coffee updated successfully!' : 'Coffee added successfully! ☕');
+        this.showNotification(isEditing ? 'Coffee updated successfully!' : 'Coffee added successfully! ☕');
     }
 
     startEditCoffee(id) {
@@ -543,7 +543,7 @@ class CoffeeTracker {
         link.href = url;
         link.download = 'coffee-tracker-backup.json';
         link.click();
-        setTimeout(() => URL.revokeObjectURL(url), 0);
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
         this.showNotification('Coffee data exported');
     }
 
@@ -653,6 +653,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
+            const targetTag = event.target.tagName;
+            const isFormField = ['INPUT', 'TEXTAREA', 'SELECT'].includes(targetTag);
+            if (isFormField || event.target.isContentEditable) {
+                return;
+            }
+
             event.preventDefault();
             tracker.undoLastAction();
         }
